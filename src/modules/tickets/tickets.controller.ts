@@ -7,6 +7,8 @@ import { UpdateTicketDto } from "./dto/update-ticket.dto";
 import { PaginationDto } from "./dto/pagination.dto";
 import { TicketsService } from "./tickets.service";
 
+type AdminUser = { id: string; email?: string; nombreCompleto?: string };
+
 @ApiTags("tickets")
 @ApiBearerAuth()
 @UseGuards(AdminAuthGuard)
@@ -28,19 +30,19 @@ export class TicketsController {
 
   @Post()
   @ApiOperation({ summary: "Crear ticket" })
-  create(@Body() dto: CreateTicketDto, @Req() request: Request & { adminUser?: { id: string } }) {
-    return this.ticketsService.create(dto, request.adminUser?.id);
+  create(@Body() dto: CreateTicketDto, @Req() request: Request & { adminUser?: AdminUser }) {
+    return this.ticketsService.create(dto, request.adminUser ? { id: request.adminUser.id, email: request.adminUser.email, name: request.adminUser.nombreCompleto } : undefined);
   }
 
   @Patch(":id")
   @ApiOperation({ summary: "Actualizar ticket" })
-  update(@Param("id") id: string, @Body() dto: UpdateTicketDto, @Req() request: Request & { adminUser?: { id: string } }) {
-    return this.ticketsService.update(id, dto, request.adminUser?.id);
+  update(@Param("id") id: string, @Body() dto: UpdateTicketDto, @Req() request: Request & { adminUser?: AdminUser }) {
+    return this.ticketsService.update(id, dto, request.adminUser ? { id: request.adminUser.id, email: request.adminUser.email, name: request.adminUser.nombreCompleto } : undefined);
   }
 
   @Delete(":id")
   @ApiOperation({ summary: "Eliminar ticket" })
-  delete(@Param("id") id: string, @Req() request: Request & { adminUser?: { id: string } }) {
-    return this.ticketsService.delete(id, request.adminUser?.id);
+  delete(@Param("id") id: string, @Req() request: Request & { adminUser?: AdminUser }) {
+    return this.ticketsService.delete(id, request.adminUser ? { id: request.adminUser.id, email: request.adminUser.email, name: request.adminUser.nombreCompleto } : undefined);
   }
 }

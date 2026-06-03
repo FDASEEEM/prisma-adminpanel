@@ -7,6 +7,8 @@ import { UpdateProfessorDto } from "./dto/update-professor.dto";
 import { PaginationDto } from "./dto/pagination.dto";
 import { ProfessorsService } from "./professors.service";
 
+type AdminUser = { id: string; email?: string; nombreCompleto?: string };
+
 @ApiTags("professors")
 @ApiBearerAuth()
 @UseGuards(AdminAuthGuard)
@@ -28,19 +30,19 @@ export class ProfessorsController {
 
   @Post()
   @ApiOperation({ summary: "Crear profesor" })
-  create(@Body() dto: CreateProfessorDto, @Req() request: Request & { adminUser?: { id: string } }) {
-    return this.professorsService.create(dto, request.adminUser?.id);
+  create(@Body() dto: CreateProfessorDto, @Req() request: Request & { adminUser?: AdminUser }) {
+    return this.professorsService.create(dto, request.adminUser ? { id: request.adminUser.id, email: request.adminUser.email, name: request.adminUser.nombreCompleto } : undefined);
   }
 
   @Patch(":id")
   @ApiOperation({ summary: "Actualizar profesor" })
-  update(@Param("id") id: string, @Body() dto: UpdateProfessorDto, @Req() request: Request & { adminUser?: { id: string } }) {
-    return this.professorsService.update(id, dto, request.adminUser?.id);
+  update(@Param("id") id: string, @Body() dto: UpdateProfessorDto, @Req() request: Request & { adminUser?: AdminUser }) {
+    return this.professorsService.update(id, dto, request.adminUser ? { id: request.adminUser.id, email: request.adminUser.email, name: request.adminUser.nombreCompleto } : undefined);
   }
 
   @Delete(":id")
   @ApiOperation({ summary: "Eliminar profesor" })
-  delete(@Param("id") id: string, @Req() request: Request & { adminUser?: { id: string } }) {
-    return this.professorsService.delete(id, request.adminUser?.id);
+  delete(@Param("id") id: string, @Req() request: Request & { adminUser?: AdminUser }) {
+    return this.professorsService.delete(id, request.adminUser ? { id: request.adminUser.id, email: request.adminUser.email, name: request.adminUser.nombreCompleto } : undefined);
   }
 }

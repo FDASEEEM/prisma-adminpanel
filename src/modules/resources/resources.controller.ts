@@ -7,6 +7,8 @@ import { UpdateResourceDto } from "./dto/update-resource.dto";
 import { PaginationDto } from "./dto/pagination.dto";
 import { ResourcesService } from "./resources.service";
 
+type AdminUser = { id: string; email?: string; nombreCompleto?: string };
+
 @ApiTags("resources")
 @ApiBearerAuth()
 @UseGuards(AdminAuthGuard)
@@ -22,19 +24,19 @@ export class ResourcesController {
 
   @Post()
   @ApiOperation({ summary: "Crear recurso" })
-  create(@Body() dto: CreateResourceDto, @Req() request: Request & { adminUser?: { id: string } }) {
-    return this.resourcesService.create(dto, request.adminUser?.id);
+  create(@Body() dto: CreateResourceDto, @Req() request: Request & { adminUser?: AdminUser }) {
+    return this.resourcesService.create(dto, request.adminUser ? { id: request.adminUser.id, email: request.adminUser.email, name: request.adminUser.nombreCompleto } : undefined);
   }
 
   @Patch(":id")
   @ApiOperation({ summary: "Actualizar recurso" })
-  update(@Param("id") id: string, @Body() dto: UpdateResourceDto, @Req() request: Request & { adminUser?: { id: string } }) {
-    return this.resourcesService.update(id, dto, request.adminUser?.id);
+  update(@Param("id") id: string, @Body() dto: UpdateResourceDto, @Req() request: Request & { adminUser?: AdminUser }) {
+    return this.resourcesService.update(id, dto, request.adminUser ? { id: request.adminUser.id, email: request.adminUser.email, name: request.adminUser.nombreCompleto } : undefined);
   }
 
   @Delete(":id")
   @ApiOperation({ summary: "Eliminar recurso" })
-  delete(@Param("id") id: string, @Req() request: Request & { adminUser?: { id: string } }) {
-    return this.resourcesService.delete(id, request.adminUser?.id);
+  delete(@Param("id") id: string, @Req() request: Request & { adminUser?: AdminUser }) {
+    return this.resourcesService.delete(id, request.adminUser ? { id: request.adminUser.id, email: request.adminUser.email, name: request.adminUser.nombreCompleto } : undefined);
   }
 }

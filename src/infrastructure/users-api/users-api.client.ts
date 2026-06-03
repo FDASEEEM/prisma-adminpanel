@@ -10,7 +10,8 @@ export type AdminProfile = {
 export type CreateProfessorUserDto = {
   email: string;
   nombreCompleto: string;
-  role?: "TEACHER";
+  password: string;
+  role?: "TEACHER" | "ADMIN";
 };
 
 @Injectable()
@@ -37,7 +38,7 @@ export class UsersApiClient {
     const response = await fetch(`${baseUrl}/admin/users`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: dto.email, nombreCompleto: dto.nombreCompleto, role: dto.role ?? "TEACHER" }),
+      body: JSON.stringify({ email: dto.email, nombreCompleto: dto.nombreCompleto, password: dto.password, role: dto.role ?? "TEACHER" }),
     });
     if (!response.ok) {
       throw new InternalServerErrorException("Could not create professor user in users service.");

@@ -7,6 +7,8 @@ import { CreateSessionDto } from "./dto/create-session.dto";
 import { SessionsService } from "./sessions.service";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 
+type AdminUser = { id: string; email?: string; nombreCompleto?: string };
+
 @ApiTags("sessions")
 @ApiBearerAuth()
 @UseGuards(AdminAuthGuard)
@@ -36,25 +38,25 @@ export class SessionsController {
 
   @Put(":id/block")
   @ApiOperation({ summary: "Bloquear sesión" })
-  async block(@Param("id") id: string, @Req() request: Request & { adminUser?: { id: string } }) {
+  async block(@Param("id") id: string, @Req() request: Request & { adminUser?: AdminUser }) {
     const session = await this.sessionsService.block(id);
-    if (request.adminUser?.id) await this.auditLogs.create(request.adminUser.id, AdminAuditAction.session_block, "AdminSession", id, { userId: session.userId });
+    if (request.adminUser) await this.auditLogs.create({ id: request.adminUser.id, email: request.adminUser.email, name: request.adminUser.nombreCompleto }, AdminAuditAction.session_block, "AdminSession", id, { userId: session.userId });
     return session;
   }
 
   @Put(":id/unblock")
   @ApiOperation({ summary: "Desbloquear sesión" })
-  async unblock(@Param("id") id: string, @Req() request: Request & { adminUser?: { id: string } }) {
+  async unblock(@Param("id") id: string, @Req() request: Request & { adminUser?: AdminUser }) {
     const session = await this.sessionsService.unblock(id);
-    if (request.adminUser?.id) await this.auditLogs.create(request.adminUser.id, AdminAuditAction.session_unblock, "AdminSession", id, { userId: session.userId });
+    if (request.adminUser) await this.auditLogs.create({ id: request.adminUser.id, email: request.adminUser.email, name: request.adminUser.nombreCompleto }, AdminAuditAction.session_unblock, "AdminSession", id, { userId: session.userId });
     return session;
   }
 
   @Put(":id/terminate")
   @ApiOperation({ summary: "Terminar sesión" })
-  async terminate(@Param("id") id: string, @Req() request: Request & { adminUser?: { id: string } }) {
+  async terminate(@Param("id") id: string, @Req() request: Request & { adminUser?: AdminUser }) {
     const session = await this.sessionsService.terminate(id);
-    if (request.adminUser?.id) await this.auditLogs.create(request.adminUser.id, AdminAuditAction.session_terminate, "AdminSession", id, { userId: session.userId });
+    if (request.adminUser) await this.auditLogs.create({ id: request.adminUser.id, email: request.adminUser.email, name: request.adminUser.nombreCompleto }, AdminAuditAction.session_terminate, "AdminSession", id, { userId: session.userId });
     return session;
   }
 

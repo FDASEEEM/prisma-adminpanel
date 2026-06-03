@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { AdminAuditAction, Prisma } from "@prisma/client";
 import { PrismaService } from "../../infrastructure/prisma/prisma.service";
 import { UsersApiClient } from "../../infrastructure/users-api/users-api.client";
-import { AuditLogsService } from "../audit-logs/audit-logs.service";
+import { AuditLogsService, ActorInfo } from "../audit-logs/audit-logs.service";
 import { CreateProfessorDto } from "./dto/create-professor.dto";
 import { UpdateProfessorDto } from "./dto/update-professor.dto";
 import { PaginationDto } from "./dto/pagination.dto";
@@ -33,29 +33,29 @@ export class ProfessorsService {
     return professor;
   }
 
-  async create(dto: CreateProfessorDto, actorId?: string) {
+  async create(dto: CreateProfessorDto, actor?: ActorInfo) {
     let userId = dto.userId;
     if (!userId && dto.email && dto.nombreCompleto) {
-      const createdUser = await this.usersApiClient.createProfessorUser({ email: dto.email, nombreCompleto: dto.nombreCompleto });
+      const createdUser = await this.usersApiClient.createProfessorUser({ email: dto.email, nombreCompleto: dto.nombreCompleto, password: dto.password, role: dto.role ?? "TEACHER" });
       userId = createdUser.id;
     }
     if (!userId) throw new NotFoundException("userId or email+nombreCompleto is required.");
     const professor = await this.prisma.professor.create({ data: { userId, nombreCompleto: dto.nombreCompleto, email: dto.email, especialidad: dto.especialidad, telefono: dto.telefono, isActive: dto.isActive ?? true } });
-    if (actorId) await this.auditLogs.create(actorId, AdminAuditAction.teacher_create, "Professor", professor.id, { email: professor.email, nombreCompleto: professor.nombreCompleto });
+    if (actor) await this.auditLogs.create(actor, AdminAuditAction.teacher_create, "Professor", professor.id, { email: professor.email, nombreCompleto: professor.nombreCompleto });
     return professor;
   }
 
-  async update(id: string, dto: UpdateProfessorDto, actorId?: string) {
+  async update(id: string, dto: UpdateProfessorDto, actor?: ActorInfo) {
     await this.get(id);
     const professor = await this.prisma.professor.update({ where: { id }, data: { nombreCompleto: dto.nombreCompleto, email: dto.email, especialidad: dto.especialidad, telefono: dto.telefono, isActive: dto.isActive } });
-    if (actorId) await this.auditLogs.create(actorId, AdminAuditAction.teacher_update, "Professor", id, { email: professor.email });
+    if (actor) await this.auditLogs.create(actor, AdminAuditAction.teacher_update, "Professor", id, { email: professor.email });
     return professor;
   }
 
-  async delete(id: string, actorId?: string) {
+  async delete(id: string, actor?: ActorInfo) {
     const professor = await this.get(id);
     await this.prisma.professor.delete({ where: { id } });
-    if (actorId) await this.auditLogs.create(actorId, AdminAuditAction.teacher_delete, "Professor", id, { email: professor.email });
+    if (actor) await this.auditLogs.create(actor, AdminAuditAction.teacher_delete, "Professor", id, { email: professor.email });
     return professor;
   }
 }

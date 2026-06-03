@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { AdminAuditAction, Prisma, TicketStatus } from "@prisma/client";
 import { PrismaService } from "../../infrastructure/prisma/prisma.service";
-import { AuditLogsService } from "../audit-logs/audit-logs.service";
+import { AuditLogsService, ActorInfo } from "../audit-logs/audit-logs.service";
 import { CreateTicketDto } from "./dto/create-ticket.dto";
 import { UpdateTicketDto } from "./dto/update-ticket.dto";
 import { PaginationDto } from "./dto/pagination.dto";
@@ -29,29 +29,29 @@ export class TicketsService {
     return ticket;
   }
 
-  async create(dto: CreateTicketDto, actorId?: string) {
+  async create(dto: CreateTicketDto, actor?: ActorInfo) {
     const ticket = await this.prisma.supportTicket.create({ data: dto });
-    if (actorId) await this.auditLogs.create(actorId, AdminAuditAction.ticket_create, "SupportTicket", ticket.id, { subject: ticket.subject });
+    if (actor) await this.auditLogs.create(actor, AdminAuditAction.ticket_create, "SupportTicket", ticket.id, { subject: ticket.subject });
     return ticket;
   }
 
-  async update(id: string, dto: UpdateTicketDto, actorId?: string) {
+  async update(id: string, dto: UpdateTicketDto, actor?: ActorInfo) {
     await this.get(id);
     const data: Prisma.SupportTicketUpdateInput = { assignedTo: dto.assignedTo, status: dto.status as TicketStatus | undefined };
     if (dto.status === "closed") data.closedAt = new Date();
     const ticket = await this.prisma.supportTicket.update({ where: { id }, data });
     if (dto.message) {
       await this.prisma.supportTicketReply.create({ data: { ticketId: ticket.id, authorId: dto.assignedTo ?? "admin", message: dto.message } });
-      if (actorId) await this.auditLogs.create(actorId, AdminAuditAction.ticket_reply, "SupportTicketReply", ticket.id, { ticketId: ticket.id });
+      if (actor) await this.auditLogs.create(actor, AdminAuditAction.ticket_reply, "SupportTicketReply", ticket.id, { ticketId: ticket.id });
     }
-    if (dto.status && actorId) await this.auditLogs.create(actorId, AdminAuditAction.ticket_status_change, "SupportTicket", id, { status: dto.status });
+    if (dto.status && actor) await this.auditLogs.create(actor, AdminAuditAction.ticket_status_change, "SupportTicket", id, { status: dto.status });
     return ticket;
   }
 
-  async delete(id: string, actorId?: string) {
+  async delete(id: string, actor?: ActorInfo) {
     const ticket = await this.get(id);
     await this.prisma.supportTicket.delete({ where: { id } });
-    if (actorId) await this.auditLogs.create(actorId, AdminAuditAction.ticket_delete, "SupportTicket", id, { subject: ticket.subject });
+    if (actor) await this.auditLogs.create(actor, AdminAuditAction.ticket_delete, "SupportTicket", id, { subject: ticket.subject });
     return ticket;
   }
 }

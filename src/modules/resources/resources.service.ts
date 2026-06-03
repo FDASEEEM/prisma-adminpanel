@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { AdminAuditAction, Prisma } from "@prisma/client";
 import { PrismaService } from "../../infrastructure/prisma/prisma.service";
-import { AuditLogsService } from "../audit-logs/audit-logs.service";
+import { AuditLogsService, ActorInfo } from "../audit-logs/audit-logs.service";
 import { CreateResourceDto } from "./dto/create-resource.dto";
 import { UpdateResourceDto } from "./dto/update-resource.dto";
 import { PaginationDto } from "./dto/pagination.dto";
@@ -25,23 +25,23 @@ export class ResourcesService {
     return resource;
   }
 
-  async create(dto: CreateResourceDto, actorId?: string) {
+  async create(dto: CreateResourceDto, actor?: ActorInfo) {
     const resource = await this.prisma.resourceMaterial.create({ data: dto });
-    if (actorId) await this.auditLogs.create(actorId, AdminAuditAction.resource_create, "ResourceMaterial", resource.id, { title: resource.title });
+    if (actor) await this.auditLogs.create(actor, AdminAuditAction.resource_create, "ResourceMaterial", resource.id, { title: resource.title });
     return resource;
   }
 
-  async update(id: string, dto: UpdateResourceDto, actorId?: string) {
+  async update(id: string, dto: UpdateResourceDto, actor?: ActorInfo) {
     await this.get(id);
     const resource = await this.prisma.resourceMaterial.update({ where: { id }, data: { title: dto.title, description: dto.description, type: dto.type, url: dto.url } });
-    if (actorId) await this.auditLogs.create(actorId, AdminAuditAction.resource_update, "ResourceMaterial", id, { title: resource.title });
+    if (actor) await this.auditLogs.create(actor, AdminAuditAction.resource_update, "ResourceMaterial", id, { title: resource.title });
     return resource;
   }
 
-  async delete(id: string, actorId?: string) {
+  async delete(id: string, actor?: ActorInfo) {
     const resource = await this.get(id);
     await this.prisma.resourceMaterial.delete({ where: { id } });
-    if (actorId) await this.auditLogs.create(actorId, AdminAuditAction.resource_delete, "ResourceMaterial", id, { title: resource.title });
+    if (actor) await this.auditLogs.create(actor, AdminAuditAction.resource_delete, "ResourceMaterial", id, { title: resource.title });
     return resource;
   }
 }
