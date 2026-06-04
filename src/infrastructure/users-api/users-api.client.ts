@@ -45,4 +45,18 @@ export class UsersApiClient {
     }
     return (await response.json()) as { id: string; email: string };
   }
+
+  async listUsers(accessToken: string): Promise<AdminProfile[]> {
+    const baseUrl = process.env.USERS_SERVICE_URL;
+    if (!baseUrl) {
+      throw new InternalServerErrorException("USERS_SERVICE_URL is required.");
+    }
+    const response = await fetch(`${baseUrl}/admin/users`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) {
+      throw new InternalServerErrorException("Could not list users from users service.");
+    }
+    return (await response.json()) as AdminProfile[];
+  }
 }
