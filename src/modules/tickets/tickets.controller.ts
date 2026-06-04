@@ -22,6 +22,12 @@ export class TicketsController {
     return this.ticketsService.list(query);
   }
 
+  @Get("by-requester/:requesterId")
+  @ApiOperation({ summary: "Listar tickets de un profesor (público)" })
+  listByRequester(@Param("requesterId") requesterId: string) {
+    return this.ticketsService.listByRequester(requesterId);
+  }
+
   @Get(":id")
   @ApiBearerAuth()
   @UseGuards(AdminAuthGuard)
