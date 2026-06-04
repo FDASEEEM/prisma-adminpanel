@@ -10,13 +10,13 @@ import { AnnouncementsService } from "./announcements.service";
 type AdminUser = { id: string; email?: string; nombreCompleto?: string };
 
 @ApiTags("announcements")
-@ApiBearerAuth()
-@UseGuards(AdminAuthGuard)
 @Controller("admin/announcements")
 export class AnnouncementsController {
   constructor(private readonly announcementsService: AnnouncementsService) {}
 
   @Get()
+  @ApiBearerAuth()
+  @UseGuards(AdminAuthGuard)
   @ApiOperation({ summary: "Listar anuncios" })
   list(@Query() query?: PaginationDto) {
     return this.announcementsService.list(query);
@@ -29,18 +29,24 @@ export class AnnouncementsController {
   }
 
   @Post()
+  @ApiBearerAuth()
+  @UseGuards(AdminAuthGuard)
   @ApiOperation({ summary: "Crear anuncio" })
   create(@Body() dto: CreateAnnouncementDto, @Req() request: Request & { adminUser?: AdminUser }) {
     return this.announcementsService.create(dto, request.adminUser ? { id: request.adminUser.id, email: request.adminUser.email, name: request.adminUser.nombreCompleto } : undefined);
   }
 
   @Patch(":id")
+  @ApiBearerAuth()
+  @UseGuards(AdminAuthGuard)
   @ApiOperation({ summary: "Actualizar anuncio" })
   update(@Param("id") id: string, @Body() dto: UpdateAnnouncementDto, @Req() request: Request & { adminUser?: AdminUser }) {
     return this.announcementsService.update(id, dto, request.adminUser ? { id: request.adminUser.id, email: request.adminUser.email, name: request.adminUser.nombreCompleto } : undefined);
   }
 
   @Delete(":id")
+  @ApiBearerAuth()
+  @UseGuards(AdminAuthGuard)
   @ApiOperation({ summary: "Eliminar anuncio" })
   delete(@Param("id") id: string, @Req() request: Request & { adminUser?: AdminUser }) {
     return this.announcementsService.delete(id, request.adminUser ? { id: request.adminUser.id, email: request.adminUser.email, name: request.adminUser.nombreCompleto } : undefined);
