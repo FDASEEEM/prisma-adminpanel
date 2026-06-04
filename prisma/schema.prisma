@@ -157,3 +157,18 @@ model AdminSession {
   @@index([expiresAt])
   @@map("admin_sessions")
 }
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id")
+  title     String
+  message   String
+  ticketId  String?  @map("ticket_id") @db.Uuid
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+  @@map("notifications")
+}

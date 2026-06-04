@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { AdminAuditAction, Prisma, TicketStatus } from "@prisma/client";
 import { PrismaService } from "../../infrastructure/prisma/prisma.service";
 import { AuditLogsService, ActorInfo } from "../audit-logs/audit-logs.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { CreateTicketDto } from "./dto/create-ticket.dto";
 import { UpdateTicketDto } from "./dto/update-ticket.dto";
 import { PaginationDto } from "./dto/pagination.dto";
@@ -11,6 +12,7 @@ export class TicketsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLogs: AuditLogsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   list(query?: PaginationDto) {
@@ -36,7 +38,7 @@ export class TicketsService {
   }
 
   async update(id: string, dto: UpdateTicketDto, actor?: ActorInfo) {
-    await this.get(id);
+    const previous = await this.get(id);
     const data: Prisma.SupportTicketUpdateInput = { assignedTo: dto.assignedTo, status: dto.status as TicketStatus | undefined };
     if (dto.status === "closed") data.closedAt = new Date();
     const ticket = await this.prisma.supportTicket.update({ where: { id }, data });
@@ -45,6 +47,14 @@ export class TicketsService {
       if (actor) await this.auditLogs.create(actor, AdminAuditAction.ticket_reply, "SupportTicketReply", ticket.id, { ticketId: ticket.id });
     }
     if (dto.status && actor) await this.auditLogs.create(actor, AdminAuditAction.ticket_status_change, "SupportTicket", id, { status: dto.status });
+    if (dto.status === "closed" && previous.status !== "closed") {
+      await this.notifications.create(
+        previous.requesterId,
+        `Ticket cerrado: ${ticket.subject}`,
+        `Tu ticket "${ticket.subject}" ha sido cerrado por el equipo de soporte.`,
+        ticket.id,
+      );
+    }
     return ticket;
   }
 
