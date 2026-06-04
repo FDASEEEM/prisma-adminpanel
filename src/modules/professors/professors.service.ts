@@ -33,10 +33,10 @@ export class ProfessorsService {
     return professor;
   }
 
-  async create(dto: CreateProfessorDto, actor?: ActorInfo) {
+  async create(dto: CreateProfessorDto, actor?: ActorInfo, accessToken?: string) {
     let userId = dto.userId;
     if (!userId && dto.email && dto.nombreCompleto) {
-      const createdUser = await this.usersApiClient.createProfessorUser({ email: dto.email, nombreCompleto: dto.nombreCompleto, password: dto.password, role: dto.role ?? "TEACHER" });
+      const createdUser = await this.usersApiClient.createProfessorUser({ email: dto.email, nombreCompleto: dto.nombreCompleto, password: dto.password, role: dto.role ?? "TEACHER" }, accessToken);
       userId = createdUser.id;
     }
     if (!userId) throw new NotFoundException("userId or email+nombreCompleto is required.");

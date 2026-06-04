@@ -31,7 +31,9 @@ export class ProfessorsController {
   @Post()
   @ApiOperation({ summary: "Crear profesor" })
   create(@Body() dto: CreateProfessorDto, @Req() request: Request & { adminUser?: AdminUser }) {
-    return this.professorsService.create(dto, request.adminUser ? { id: request.adminUser.id, email: request.adminUser.email, name: request.adminUser.nombreCompleto } : undefined);
+    const authHeader = request.headers.authorization;
+    const accessToken = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : undefined;
+    return this.professorsService.create(dto, request.adminUser ? { id: request.adminUser.id, email: request.adminUser.email, name: request.adminUser.nombreCompleto } : undefined, accessToken);
   }
 
   @Patch(":id")

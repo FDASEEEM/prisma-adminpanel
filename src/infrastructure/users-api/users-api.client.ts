@@ -30,20 +30,23 @@ export class UsersApiClient {
     return (await response.json()) as AdminProfile;
   }
 
-  async createProfessorUser(dto: CreateProfessorUserDto): Promise<{ id: string; email: string }> {
+  async createProfessorUser(dto: CreateProfessorUserDto, accessToken?: string): Promise<{ id: string; email: string }> {
     const baseUrl = process.env.USERS_SERVICE_URL;
     if (!baseUrl) {
       throw new InternalServerErrorException("USERS_SERVICE_URL is required.");
     }
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
     const response = await fetch(`${baseUrl}/admin/users`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ email: dto.email, nombreCompleto: dto.nombreCompleto, password: dto.password, role: dto.role ?? "TEACHER" }),
     });
-    if (!response.ok) {
-      throw new InternalServerErrorException("Could not create professor user in users service.");
+    const data = await response.json();
+    if (!response.ok || !data.ok) {
+      throw new InternalServerErrorException(data.message || "Could not create professor user in users service.");
     }
-    return (await response.json()) as { id: string; email: string };
+    return { id: data.user.id, email: data.user.email };
   }
 
   async listUsers(accessToken: string): Promise<AdminProfile[]> {
