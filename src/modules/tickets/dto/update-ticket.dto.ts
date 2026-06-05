@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { TicketStatus } from "@prisma/client";
+import { TicketStatus, TicketPriority } from "@prisma/client";
 import { IsIn, IsOptional, IsString, MinLength } from "class-validator";
 
 export class UpdateTicketDto {
@@ -7,6 +7,11 @@ export class UpdateTicketDto {
   @IsOptional()
   @IsIn(["open", "in_progress", "closed"])
   status?: TicketStatus;
+
+  @ApiPropertyOptional({ enum: ["low", "medium", "high"] })
+  @IsOptional()
+  @IsIn(["low", "medium", "high"])
+  priority?: TicketPriority;
 
   @ApiPropertyOptional({ example: "admin-user-1" })
   @IsOptional()

@@ -7,53 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum AdminAuditAction {
-  dashboard_view
-  teacher_create
-  teacher_update
-  teacher_delete
-  ticket_reply
-  ticket_status_change
-  ticket_create
-  ticket_delete
-  resource_create
-  resource_update
-  resource_delete
-  announcement_create
-  announcement_update
-  announcement_delete
-  session_block
-  session_unblock
-  session_terminate
-}
-
-enum TicketStatus {
-  open
-  in_progress
-  closed
-}
-
-enum ResourceType {
-  file
-  link
-  video
-  document
-}
-
-enum AnnouncementAudience {
-  all
-  teachers
-  admins
-}
-
 model AdminAuditLog {
-  id          String            @id @default(uuid()) @db.Uuid
-  actorId     String            @map("actor_id")
-  action      AdminAuditAction  @map("action")
-  entity      String            @map("entity")
-  entityId    String?           @map("entity_id")
-  metadata    Json?             @map("metadata")
-  createdAt   DateTime          @default(now()) @map("created_at")
+  id        String           @id @default(uuid()) @db.Uuid
+  actorId   String           @map("actor_id")
+  action    AdminAuditAction @map("action")
+  entity    String           @map("entity")
+  entityId  String?          @map("entity_id")
+  metadata  Json?            @map("metadata")
+  createdAt DateTime         @default(now()) @map("created_at")
 
   @@index([actorId])
   @@index([action])
@@ -62,16 +23,16 @@ model AdminAuditLog {
 }
 
 model SupportTicket {
-  id          String        @id @default(uuid()) @db.Uuid
-  requesterId String        @map("requester_id")
+  id          String         @id @default(uuid()) @db.Uuid
+  requesterId String         @map("requester_id")
   subject     String
   message     String
-  status      TicketStatus  @default(open)
-  assignedTo  String?       @map("assigned_to")
-  closedAt    DateTime?     @map("closed_at")
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
-
+  status      TicketStatus   @default(open)
+  priority    TicketPriority @default(medium)
+  assignedTo  String?        @map("assigned_to")
+  closedAt    DateTime?      @map("closed_at")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
   replies     SupportTicketReply[]
 
   @@index([status])
@@ -80,13 +41,12 @@ model SupportTicket {
 }
 
 model SupportTicketReply {
-  id          String        @id @default(uuid()) @db.Uuid
-  ticketId    String        @map("ticket_id") @db.Uuid
-  authorId    String        @map("author_id")
-  message     String
-  createdAt   DateTime      @default(now()) @map("created_at")
-
-  ticket      SupportTicket @relation(fields: [ticketId], references: [id])
+  id        String        @id @default(uuid()) @db.Uuid
+  ticketId  String        @map("ticket_id") @db.Uuid
+  authorId  String        @map("author_id")
+  message   String
+  createdAt DateTime      @default(now()) @map("created_at")
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id])
 
   @@index([ticketId])
   @@map("support_ticket_replies")
@@ -107,16 +67,16 @@ model ResourceMaterial {
 }
 
 model Announcement {
-  id          String               @id @default(uuid()) @db.Uuid
-  title       String
-  body        String
-  audience    AnnouncementAudience @default(all)
-  isActive    Boolean              @default(true) @map("is_active")
-  startsAt    DateTime?            @map("starts_at")
-  endsAt      DateTime?            @map("ends_at")
-  createdBy   String               @map("created_by")
-  createdAt   DateTime             @default(now()) @map("created_at")
-  updatedAt   DateTime             @updatedAt @map("updated_at")
+  id        String               @id @default(uuid()) @db.Uuid
+  title     String
+  body      String
+  audience  AnnouncementAudience @default(all)
+  isActive  Boolean              @default(true) @map("is_active")
+  startsAt  DateTime?            @map("starts_at")
+  endsAt    DateTime?            @map("ends_at")
+  createdBy String               @map("created_by")
+  createdAt DateTime             @default(now()) @map("created_at")
+  updatedAt DateTime             @updatedAt @map("updated_at")
 
   @@index([isActive])
   @@index([audience])
@@ -124,15 +84,15 @@ model Announcement {
 }
 
 model Professor {
-  id              String   @id @default(uuid()) @db.Uuid
-  userId          String   @unique @map("user_id")
-  nombreCompleto  String   @map("nombre_completo")
-  email           String
-  especialidad    String?
-  telefono        String?
-  isActive        Boolean  @default(true) @map("is_active")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @unique @map("user_id")
+  nombreCompleto String   @map("nombre_completo")
+  email          String
+  especialidad   String?
+  telefono       String?
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@index([email])
   @@index([isActive])
@@ -140,16 +100,16 @@ model Professor {
 }
 
 model AdminSession {
-  id           String    @id @default(uuid()) @db.Uuid
-  userId       String    @map("user_id")
-  tokenHash    String    @map("token_hash")
-  userAgent    String?   @map("user_agent")
-  ipAddress    String?   @map("ip_address")
-  isActive     Boolean   @default(true) @map("is_active")
-  isBlocked    Boolean   @default(false) @map("is_blocked")
-  lastAccess   DateTime  @default(now()) @map("last_access")
-  expiresAt    DateTime  @map("expires_at")
-  createdAt    DateTime  @default(now()) @map("created_at")
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id")
+  tokenHash  String   @map("token_hash")
+  userAgent  String?  @map("user_agent")
+  ipAddress  String?  @map("ip_address")
+  isActive   Boolean  @default(true) @map("is_active")
+  isBlocked  Boolean  @default(false) @map("is_blocked")
+  lastAccess DateTime @default(now()) @map("last_access")
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
 
   @@index([userId])
   @@index([isActive])
@@ -171,4 +131,51 @@ model Notification {
   @@index([read])
   @@index([createdAt])
   @@map("notifications")
+}
+
+enum AdminAuditAction {
+  dashboard_view
+  teacher_create
+  teacher_update
+  teacher_delete
+  ticket_reply
+  ticket_status_change
+  resource_create
+  resource_delete
+  announcement_create
+  announcement_update
+  announcement_delete
+  ticket_create
+  ticket_delete
+  resource_update
+  session_block
+  session_unblock
+  session_terminate
+  login
+  logout
+}
+
+enum TicketPriority {
+  low
+  medium
+  high
+}
+
+enum TicketStatus {
+  open
+  in_progress
+  closed
+}
+
+enum ResourceType {
+  file
+  link
+  video
+  document
+}
+
+enum AnnouncementAudience {
+  all
+  teachers
+  admins
 }
