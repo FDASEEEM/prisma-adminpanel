@@ -11,6 +11,7 @@ import { AuditLogsModule } from "./modules/audit-logs/audit-logs.module";
 import { ProfessorsModule } from "./modules/professors/professors.module";
 import { SessionsModule } from "./modules/sessions/sessions.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
+import { ColegioStatsModule } from "./modules/colegio-stats/colegio-stats.module";
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { NotificationsModule } from "./modules/notifications/notifications.modul
     ProfessorsModule,
     SessionsModule,
     NotificationsModule,
+    ColegioStatsModule,
   ],
   controllers: [AppController],
 })
