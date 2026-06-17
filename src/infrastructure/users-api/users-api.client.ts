@@ -3,15 +3,17 @@ import { Injectable, InternalServerErrorException } from "@nestjs/common";
 export type AdminProfile = {
   id: string;
   email?: string;
-  role: "ADMIN" | "TEACHER";
+  role: "SUPERADMIN" | "ADMIN" | "TEACHER";
   nombreCompleto?: string;
+  colegioId?: string | null;
 };
 
 export type CreateProfessorUserDto = {
   email: string;
   nombreCompleto: string;
   password: string;
-  role?: "TEACHER" | "ADMIN";
+  role?: "TEACHER" | "ADMIN" | "SUPERADMIN";
+  colegioId?: string;
 };
 
 @Injectable()
@@ -40,7 +42,7 @@ export class UsersApiClient {
     const response = await fetch(`${baseUrl}/admin/users`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ email: dto.email, nombreCompleto: dto.nombreCompleto, password: dto.password, role: dto.role ?? "TEACHER" }),
+      body: JSON.stringify({ email: dto.email, nombreCompleto: dto.nombreCompleto, password: dto.password, role: dto.role ?? "TEACHER", colegioId: dto.colegioId }),
     });
     const data = await response.json();
     if (!response.ok || !data.ok) {

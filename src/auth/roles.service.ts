@@ -8,7 +8,7 @@ export class RolesService {
 
   async assertAdmin(accessToken: string) {
     const profile = await this.usersApiClient.getCurrentUser(accessToken);
-    if (profile.role !== "ADMIN") {
+    if (profile.role !== "ADMIN" && profile.role !== "SUPERADMIN") {
       throw new InternalServerErrorException("Admin role required.");
     }
     return profile;
