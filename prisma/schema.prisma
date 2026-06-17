@@ -90,12 +90,14 @@ model Professor {
   email          String
   especialidad   String?
   telefono       String?
+  colegioId      String?  @map("colegio_id") @db.Uuid
   isActive       Boolean  @default(true) @map("is_active")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@index([email])
   @@index([isActive])
+  @@index([colegioId])
   @@map("professors")
 }
 
@@ -153,6 +155,9 @@ enum AdminAuditAction {
   session_terminate
   login
   logout
+  colegio_create
+  colegio_update
+  colegio_delete
 }
 
 enum TicketPriority {

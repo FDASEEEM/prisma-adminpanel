@@ -7,7 +7,7 @@ import { UpdateProfessorDto } from "./dto/update-professor.dto";
 import { PaginationDto } from "./dto/pagination.dto";
 import { ProfessorsService } from "./professors.service";
 
-type AdminUser = { id: string; email?: string; nombreCompleto?: string };
+type AdminUser = { id: string; email?: string; nombreCompleto?: string; colegioId?: string | null };
 
 @ApiTags("professors")
 @ApiBearerAuth()
@@ -18,8 +18,9 @@ export class ProfessorsController {
 
   @Get()
   @ApiOperation({ summary: "Listar profesores" })
-  list(@Query() query?: PaginationDto) {
-    return this.professorsService.list(query);
+  list(@Query() query: PaginationDto, @Req() request: Request & { adminUser?: AdminUser }) {
+    const colegioId = request.adminUser?.colegioId;
+    return this.professorsService.list(query, colegioId);
   }
 
   @Get(":id")
@@ -33,6 +34,9 @@ export class ProfessorsController {
   create(@Body() dto: CreateProfessorDto, @Req() request: Request & { adminUser?: AdminUser }) {
     const authHeader = request.headers.authorization;
     const accessToken = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : undefined;
+    if (!dto.colegioId && request.adminUser?.colegioId) {
+      dto.colegioId = request.adminUser.colegioId;
+    }
     return this.professorsService.create(dto, request.adminUser ? { id: request.adminUser.id, email: request.adminUser.email, name: request.adminUser.nombreCompleto } : undefined, accessToken);
   }
 

@@ -11,11 +11,12 @@ import { PaginationDto } from "./dto/pagination.dto";
 export class ProfessorsService {
   constructor(private readonly prisma: PrismaService, private readonly auditLogs: AuditLogsService, private readonly usersApiClient: UsersApiClient) {}
 
-  list(query?: PaginationDto) {
+  list(query?: PaginationDto, colegioId?: string | null) {
     const page = query?.page ?? 1;
     const limit = query?.limit ?? 50;
     const skip = (page - 1) * limit;
     const where: Prisma.ProfessorWhereInput = {};
+    if (colegioId) where.colegioId = colegioId;
     if (query?.isActive !== undefined) where.isActive = query.isActive;
     if (query?.especialidad) where.especialidad = { contains: query.especialidad, mode: "insensitive" };
     return this.prisma.professor.findMany({ where, orderBy: { createdAt: "desc" }, skip, take: limit });
@@ -36,11 +37,11 @@ export class ProfessorsService {
   async create(dto: CreateProfessorDto, actor?: ActorInfo, accessToken?: string) {
     let userId = dto.userId;
     if (!userId && dto.email && dto.nombreCompleto) {
-      const createdUser = await this.usersApiClient.createProfessorUser({ email: dto.email, nombreCompleto: dto.nombreCompleto, password: dto.password, role: dto.role ?? "TEACHER" }, accessToken);
+      const createdUser = await this.usersApiClient.createProfessorUser({ email: dto.email, nombreCompleto: dto.nombreCompleto, password: dto.password, role: dto.role ?? "TEACHER", colegioId: dto.colegioId }, accessToken);
       userId = createdUser.id;
     }
     if (!userId) throw new NotFoundException("userId or email+nombreCompleto is required.");
-    const professor = await this.prisma.professor.create({ data: { userId, nombreCompleto: dto.nombreCompleto, email: dto.email, especialidad: dto.especialidad, telefono: dto.telefono, isActive: dto.isActive ?? true } });
+    const professor = await this.prisma.professor.create({ data: { userId, nombreCompleto: dto.nombreCompleto, email: dto.email, especialidad: dto.especialidad, telefono: dto.telefono, colegioId: dto.colegioId, isActive: dto.isActive ?? true } });
     if (actor) await this.auditLogs.create(actor, AdminAuditAction.teacher_create, "Professor", professor.id, { email: professor.email, nombreCompleto: professor.nombreCompleto });
     return professor;
   }

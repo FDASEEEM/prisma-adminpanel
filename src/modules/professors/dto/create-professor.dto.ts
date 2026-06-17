@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsBoolean, IsEmail, IsIn, IsOptional, IsString, MinLength } from "class-validator";
+import { IsBoolean, IsEmail, IsIn, IsOptional, IsString, IsUUID, MinLength } from "class-validator";
 
 export class CreateProfessorDto {
   @ApiPropertyOptional({ example: "user-123" })
@@ -21,11 +21,11 @@ export class CreateProfessorDto {
   @MinLength(6)
   password!: string;
 
-  @ApiPropertyOptional({ example: "TEACHER", enum: ["TEACHER", "ADMIN"] })
+  @ApiPropertyOptional({ example: "TEACHER", enum: ["TEACHER", "ADMIN", "SUPERADMIN"] })
   @IsOptional()
   @IsString()
-  @IsIn(["TEACHER", "ADMIN"])
-  role?: "TEACHER" | "ADMIN";
+  @IsIn(["TEACHER", "ADMIN", "SUPERADMIN"])
+  role?: "TEACHER" | "ADMIN" | "SUPERADMIN";
 
   @ApiPropertyOptional({ example: "Matemáticas" })
   @IsOptional()
@@ -36,6 +36,11 @@ export class CreateProfessorDto {
   @IsOptional()
   @IsString()
   telefono?: string;
+
+  @ApiPropertyOptional({ example: "uuid-del-colegio" })
+  @IsOptional()
+  @IsUUID()
+  colegioId?: string;
 
   @ApiPropertyOptional({ example: true })
   @IsOptional()
