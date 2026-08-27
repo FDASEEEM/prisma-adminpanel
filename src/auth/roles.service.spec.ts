@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { InternalServerErrorException } from "@nestjs/common";
+import { ForbiddenException } from "@nestjs/common";
 import { UsersApiClient } from "../infrastructure/users-api/users-api.client";
 import { RolesService } from "./roles.service";
 
@@ -42,10 +42,10 @@ describe("RolesService", () => {
       expect(result).toEqual(profile);
     });
 
-    it("should throw InternalServerErrorException when role is TEACHER", async () => {
+    it("should throw ForbiddenException when role is TEACHER", async () => {
       usersApiClient.getCurrentUser.mockResolvedValue({ id: "u1", role: "TEACHER" });
 
-      await expect(service.assertAdmin("token")).rejects.toThrow(InternalServerErrorException);
+      await expect(service.assertAdmin("token")).rejects.toThrow(ForbiddenException);
     });
   });
 });

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { InternalServerErrorException } from "@nestjs/common";
+import { BadGatewayException, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
 import { UsersApiClient } from "./users-api.client";
 
 describe("UsersApiClient", () => {
@@ -32,7 +32,7 @@ describe("UsersApiClient", () => {
     it("should throw if USERS_SERVICE_URL is not configured", async () => {
       delete process.env.USERS_SERVICE_URL;
 
-      await expect(client.getCurrentUser("token")).rejects.toThrow(InternalServerErrorException);
+      await expect(client.getCurrentUser("token")).rejects.toThrow(BadGatewayException);
     });
 
     it("should return profile on success", async () => {
@@ -46,11 +46,25 @@ describe("UsersApiClient", () => {
       expect(result).toEqual(profile);
     });
 
-    it("should throw when response not ok", async () => {
+    it("should throw UnauthorizedException when users service returns 401", async () => {
       process.env.USERS_SERVICE_URL = "http://users";
-      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, json: jest.fn() });
+      (global.fetch as jest.Mock).mockResolvedValue({ status: 401, ok: false, json: jest.fn() });
 
-      await expect(client.getCurrentUser("token")).rejects.toThrow(InternalServerErrorException);
+      await expect(client.getCurrentUser("token")).rejects.toThrow(UnauthorizedException);
+    });
+
+    it("should throw BadGatewayException when response not ok", async () => {
+      process.env.USERS_SERVICE_URL = "http://users";
+      (global.fetch as jest.Mock).mockResolvedValue({ status: 500, ok: false, json: jest.fn() });
+
+      await expect(client.getCurrentUser("token")).rejects.toThrow(BadGatewayException);
+    });
+
+    it("should throw BadGatewayException when users service is unreachable", async () => {
+      process.env.USERS_SERVICE_URL = "http://users";
+      (global.fetch as jest.Mock).mockRejectedValue(new Error("network down"));
+
+      await expect(client.getCurrentUser("token")).rejects.toThrow(BadGatewayException);
     });
   });
 

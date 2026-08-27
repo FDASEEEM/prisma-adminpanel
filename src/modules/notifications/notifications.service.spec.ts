@@ -5,6 +5,7 @@ import { NotificationsService } from "./notifications.service";
 const mockPrismaService = () => ({
   notification: {
     findMany: jest.fn(),
+    findUnique: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
   },
@@ -75,17 +76,32 @@ describe("NotificationsService", () => {
   });
 
   describe("markAsRead", () => {
-    it("should update read to true", async () => {
+    it("should update read to true when the user owns the notification", async () => {
+      prisma.notification.findUnique.mockResolvedValue({ id: "n1", userId: "u1" });
       const updated = { id: "n1", userId: "u1", title: "T", message: "M", read: true, createdAt: new Date() };
       prisma.notification.update.mockResolvedValue(updated);
 
-      const result = await service.markAsRead("n1");
+      const result = await service.markAsRead("n1", "u1");
 
       expect(prisma.notification.update).toHaveBeenCalledWith({
         where: { id: "n1" },
         data: { read: true },
       });
       expect(result).toEqual(updated);
+    });
+
+    it("should throw ForbiddenException when the user does not own the notification", async () => {
+      prisma.notification.findUnique.mockResolvedValue({ id: "n1", userId: "u2" });
+
+      await expect(service.markAsRead("n1", "u1")).rejects.toThrow("You cannot modify this notification.");
+      expect(prisma.notification.update).not.toHaveBeenCalled();
+    });
+
+    it("should throw NotFoundException when the notification does not exist", async () => {
+      prisma.notification.findUnique.mockResolvedValue(null);
+
+      await expect(service.markAsRead("n1", "u1")).rejects.toThrow("Notification not found.");
+      expect(prisma.notification.update).not.toHaveBeenCalled();
     });
   });
 });

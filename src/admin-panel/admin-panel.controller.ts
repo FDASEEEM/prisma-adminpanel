@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards } from "@nestjs/common";
+import { Controller, Get, Logger, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Request } from "express";
 import { AdminAuthGuard } from "../auth/guards/admin-auth.guard";
@@ -10,6 +10,8 @@ import { AdminPanelService } from "./admin-panel.service";
 @UseGuards(AdminAuthGuard)
 @Controller("admin")
 export class AdminPanelController {
+  private readonly logger = new Logger(AdminPanelController.name);
+
   constructor(
     private readonly adminPanelService: AdminPanelService,
     private readonly auditLogsService: AuditLogsService,
@@ -20,9 +22,13 @@ export class AdminPanelController {
   async dashboardSummary(@Req() request: Request & { adminUser?: { id: string; email?: string; nombreCompleto?: string } }) {
     const adminUser = request.adminUser;
     if (adminUser) {
-      this.auditLogsService.create(adminUser, "dashboard_view", "dashboard", undefined, {
-        ipAddress: request.ip ?? request.socket.remoteAddress,
-      });
+      try {
+        await this.auditLogsService.create(adminUser, "dashboard_view", "dashboard", undefined, {
+          ipAddress: request.ip ?? request.socket.remoteAddress,
+        });
+      } catch (error) {
+        this.logger.error(`Failed to audit dashboard_view for ${adminUser.id}: ${error.message}`);
+      }
     }
     return this.adminPanelService.getDashboardSummary(adminUser?.id);
   }

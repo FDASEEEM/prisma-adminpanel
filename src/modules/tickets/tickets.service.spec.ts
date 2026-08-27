@@ -107,14 +107,16 @@ describe("TicketsService", () => {
 
   describe("create", () => {
     it("should create ticket and log audit when actor present", async () => {
-      const dto = { subject: "S" } as any;
+      const dto = { subject: "S", requesterId: "r1" } as any;
       const created = { id: "t1", subject: "S" };
       prisma.supportTicket.create.mockResolvedValue(created as any);
       const actor = { id: "u1" };
 
       const result = await service.create(dto, actor);
 
-      expect(prisma.supportTicket.create).toHaveBeenCalledWith({ data: dto });
+      expect(prisma.supportTicket.create).toHaveBeenCalledWith({
+        data: { subject: "S", requesterId: "r1" },
+      });
       expect(auditLogs.create).toHaveBeenCalledWith(actor, AdminAuditAction.ticket_create, "SupportTicket", "t1", { subject: "S" });
       expect(result).toEqual(created);
     });
@@ -122,9 +124,15 @@ describe("TicketsService", () => {
     it("should not log audit when no actor", async () => {
       prisma.supportTicket.create.mockResolvedValue({ id: "t1", subject: "S" } as any);
 
-      await service.create({ subject: "S" } as any);
+      await service.create({ subject: "S", requesterId: "r1" } as any);
 
       expect(auditLogs.create).not.toHaveBeenCalled();
+    });
+
+    it("should reject when requesterId is missing", async () => {
+      await expect(service.create({ subject: "S" } as any)).rejects.toThrow(
+        "requesterId is required.",
+      );
     });
   });
 

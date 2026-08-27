@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { BadGatewayException, Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
 
 export type AdminProfile = {
   id: string;
@@ -21,13 +21,21 @@ export class UsersApiClient {
   async getCurrentUser(accessToken: string): Promise<AdminProfile> {
     const baseUrl = process.env.USERS_SERVICE_URL;
     if (!baseUrl) {
-      throw new InternalServerErrorException("USERS_SERVICE_URL is required.");
+      throw new BadGatewayException("USERS_SERVICE_URL is required.");
     }
-    const response = await fetch(`${baseUrl}/auth/me`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    let response;
+    try {
+      response = await fetch(`${baseUrl}/auth/me`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+    } catch {
+      throw new BadGatewayException("Could not reach users service.");
+    }
+    if (response.status === 401) {
+      throw new UnauthorizedException("Invalid credentials.");
+    }
     if (!response.ok) {
-      throw new InternalServerErrorException("Could not validate admin profile.");
+      throw new BadGatewayException("Could not validate user profile.");
     }
     return (await response.json()) as AdminProfile;
   }

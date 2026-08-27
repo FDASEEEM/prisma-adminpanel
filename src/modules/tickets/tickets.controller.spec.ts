@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { TicketsController } from "./tickets.controller";
 import { TicketsService } from "./tickets.service";
 import { AdminAuthGuard } from "../../auth/guards/admin-auth.guard";
+import { UserAuthGuard } from "../../auth/guards/user-auth.guard";
 
 const mockTicketsService = () => ({
   list: jest.fn(),
@@ -17,6 +18,7 @@ describe("TicketsController", () => {
   let service: ReturnType<typeof mockTicketsService>;
   const request: any = { adminUser: { id: "u1", email: "u@u.com", nombreCompleto: "User" } };
   const actor = { id: "u1", email: "u@u.com", name: "User" };
+  const userRequest: any = { user: { id: "u1", role: "ADMIN", email: "u@u.com", nombreCompleto: "User" } };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -24,6 +26,8 @@ describe("TicketsController", () => {
       providers: [{ provide: TicketsService, useFactory: mockTicketsService }],
     })
       .overrideGuard(AdminAuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(UserAuthGuard)
       .useValue({ canActivate: () => true })
       .compile();
 
@@ -46,8 +50,14 @@ describe("TicketsController", () => {
   describe("listByRequester", () => {
     it("should delegate to service", () => {
       service.listByRequester.mockReturnValue([{ id: "t1" }]);
-      expect(controller.listByRequester("r1")).toEqual([{ id: "t1" }]);
+      expect(controller.listByRequester("r1", userRequest)).toEqual([{ id: "t1" }]);
       expect(service.listByRequester).toHaveBeenCalledWith("r1");
+    });
+
+    it("should throw ForbiddenException when a non-admin queries another user's tickets", () => {
+      const teacherRequest = { user: { id: "u2", role: "TEACHER" } };
+      expect(() => controller.listByRequester("r1", teacherRequest as any)).toThrow();
+      expect(service.listByRequester).not.toHaveBeenCalled();
     });
   });
 
@@ -60,11 +70,14 @@ describe("TicketsController", () => {
   });
 
   describe("create", () => {
-    it("should delegate to service", () => {
+    it("should delegate to service with actor", () => {
       const dto = { subject: "S" } as any;
       service.create.mockReturnValue({ id: "t1" });
-      expect(controller.create(dto)).toEqual({ id: "t1" });
-      expect(service.create).toHaveBeenCalledWith(dto);
+      expect(controller.create(dto, userRequest)).toEqual({ id: "t1" });
+      expect(service.create).toHaveBeenCalledWith(
+        expect.objectContaining({ subject: "S", requesterId: "u1" }),
+        actor,
+      );
     });
   });
 

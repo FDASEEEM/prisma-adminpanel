@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { AdminAuditAction, Prisma, TicketStatus, TicketPriority } from "@prisma/client";
 import { PrismaService } from "../../infrastructure/prisma/prisma.service";
 import { AuditLogsService, ActorInfo } from "../audit-logs/audit-logs.service";
@@ -45,7 +45,12 @@ export class TicketsService {
   }
 
   async create(dto: CreateTicketDto, actor?: ActorInfo) {
-    const ticket = await this.prisma.supportTicket.create({ data: dto });
+    if (!dto.requesterId) {
+      throw new BadRequestException("requesterId is required.");
+    }
+    const ticket = await this.prisma.supportTicket.create({
+      data: { ...dto, requesterId: dto.requesterId },
+    });
     if (actor) await this.auditLogs.create(actor, AdminAuditAction.ticket_create, "SupportTicket", ticket.id, { subject: ticket.subject });
     return ticket;
   }

@@ -2,13 +2,17 @@ import * as path from "path";
 import * as dotenv from "dotenv";
 dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
 
+import helmet from "helmet";
 import { NestFactory } from "@nestjs/core";
-import { ValidationPipe } from "@nestjs/common";
+import { Logger, ValidationPipe } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const logger = new Logger("Bootstrap");
+
+  app.use(helmet({ contentSecurityPolicy: false }));
 
   app.setGlobalPrefix("api");
 
@@ -25,19 +29,21 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  const config = new DocumentBuilder()
-    .setTitle("P.R.I.S.M.A. Admin Panel")
-    .setDescription("API de administración")
-    .setVersion("1.0")
-    .addBearerAuth()
-    .build();
+  if (process.env.NODE_ENV !== "production") {
+    const config = new DocumentBuilder()
+      .setTitle("P.R.I.S.M.A. Admin Panel")
+      .setDescription("API de administración")
+      .setVersion("1.0")
+      .addBearerAuth()
+      .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup("docs", app, document);
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup("docs", app, document);
+  }
 
   const port = process.env.PORT || 3004;
   await app.listen(port);
-  console.log(`Admin panel running on http://localhost:${port}`);
-  console.log(`Swagger docs at http://localhost:${port}/docs`);
+  logger.log(`Admin panel running on http://localhost:${port}`);
+  logger.log(`Swagger docs at http://localhost:${port}/docs`);
 }
 bootstrap();

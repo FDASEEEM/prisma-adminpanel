@@ -3,9 +3,12 @@ import { TicketStatus, TicketPriority } from "@prisma/client";
 import { IsIn, IsOptional, IsString, MinLength } from "class-validator";
 
 export class CreateTicketDto {
-  @ApiProperty({ example: "user-123" })
+  // Opcional en el body: el controller lo fija al usuario autenticado
+  // (un admin puede indicar otro requesterId explícitamente).
+  @ApiPropertyOptional({ example: "user-123" })
+  @IsOptional()
   @IsString()
-  requesterId!: string;
+  requesterId?: string;
 
   @ApiProperty({ example: "Error al generar PDF" })
   @IsString()
